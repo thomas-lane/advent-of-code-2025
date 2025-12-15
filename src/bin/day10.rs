@@ -91,7 +91,86 @@ fn part1() {
     println!("Result: {}", result);
 }
 
+use good_lp::{Constraint, Expression, ProblemVariables, Solution, SolverModel, Variable, constraint, default_solver, variable, variables};
+
+fn parse_line_joltage(line: &str) -> (ProblemVariables, Vec<Variable>, Vec<Constraint>) {
+    let left_square_index = line.find("[").unwrap();
+    let right_square_index = line.find("]").unwrap();
+
+    let light_len = right_square_index - left_square_index - 1;
+
+    let left_curly_index = line.find("{").unwrap();
+    let right_curly_index = line.find("}").unwrap();
+
+    let mut buttons = Vec::new();
+    let mut current_number = 0;
+    for i in right_square_index + 1..left_curly_index {
+        let c = line.as_bytes()[i] as char;
+
+        match c {
+            '(' => {
+                buttons.push(BitArray::new(light_len));
+            }
+            ')' | ',' => {
+                buttons.last_mut().unwrap().set(current_number, true);
+                current_number = 0;
+            }
+            '0'..='9' => {
+                current_number *= 10;
+                current_number += c.to_digit(10).unwrap() as usize;
+            }
+            ' ' => (),
+            _ => panic!("Unexpected character: '{}'", c)
+        }
+    }
+
+    let mut problem_variables = ProblemVariables::new();
+    let variables: Vec<Variable> = (0..buttons.len()).map(|_| problem_variables.add(variable().min(0).integer())).collect();
+
+    let mut targets = Vec::new();
+    let mut current_number = 0;
+    for i in left_curly_index + 1..right_curly_index {
+        let c = line.as_bytes()[i] as char;
+
+        match c {
+            ',' => {
+                targets.push(current_number);
+                current_number = 0;
+            }
+            '0'..='9' => {
+                current_number *= 10;
+                current_number += c.to_digit(10).unwrap() as u32;
+            }
+            _ => panic!("Unexpected character: '{}'", c)
+        }
+    }
+    targets.push(current_number);
+
+    let mut constraints = Vec::new();
+    for i in 0..light_len {
+        let expression: Expression = variables.iter().enumerate().map(|(j, v)| (buttons[j].get(i) as i32) * *v).sum();
+        constraints.push(expression.eq(targets[i]));
+    }
+
+    (problem_variables, variables, constraints)
+}
+
 fn part2() {
+    let input = input_to_string("day10.txt");
+
+    let result: f64 = input.lines()
+        .map(parse_line_joltage)
+        .map(|(p, v, c)| {
+            let solution = p.minimise(v.iter().sum::<Expression>())
+                .using(default_solver)
+                .with_all(c)
+                .solve()
+                .unwrap();
+            v.iter().map(|v| solution.value(*v)).sum::<f64>()
+        })
+        .sum();
+
+    println!("Result: {}", result);
 }
 
 fn main() {

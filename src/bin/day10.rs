@@ -91,7 +91,7 @@ fn part1() {
     println!("Result: {}", result);
 }
 
-use good_lp::{Constraint, Expression, ProblemVariables, Solution, SolverModel, Variable, constraint, default_solver, variable, variables};
+use good_lp::{Constraint, Expression, ProblemVariables, Solution, SolverModel, Variable, default_solver, variable};
 
 fn parse_line_joltage(line: &str) -> (ProblemVariables, Vec<Variable>, Vec<Constraint>) {
     let left_square_index = line.find("[").unwrap();

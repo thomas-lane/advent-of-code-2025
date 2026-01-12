@@ -7,7 +7,7 @@ pub fn input_to_string(input_name: &str) -> String {
     contents
 }
 
-#[derive(Clone)]
+#[derive(Clone, std::cmp::Eq, std::hash::Hash)]
 pub struct BitArray {
     len: usize,
     data: Box<[u64]>
